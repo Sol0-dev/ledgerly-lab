@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Report a finding &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Report a finding</h1>
+    <p class="sub">Submit the finding you confirmed. Quality matters: completeness and accuracy drive your score.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Before you report</h2>
+    <p class="muted">A report can only be accepted if the issue was actually confirmed on the server. A report about a
+    feature that was never exploited will not match and cannot earn a flag.</p>
+    <div class="code-block" style="white-space:pre">
+ 1. Confirm the primitive server-side
+ 2. Write a complete, reproducible report
+ 3. Triage accepts it -> flag awarded (tomorrow)
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Report quality</h2>
+    <p class="muted">Completeness and accuracy drive your score. Give triage everything needed to re-run the issue
+    from your writeup alone.</p>
+    <ul class="muted" style="padding-left:20px;line-height:1.7">
+      <li>Pick the class that matches the flaw</li>
+      <li>Give the exact endpoint, parameter and payload</li>
+      <li>Describe reproduction steps in order</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Report</h2>
+  <form id="report-form" method="post" action="{{ url_for('report_new') }}">
+    <div class="form-row">
+      <label class="field">
+        <span>Title</span>
+        <input type="text" name="title" placeholder="Brief description of the finding" required>
+      </label>
+      <div class="form-row" style="grid-template-columns:1fr 1fr;gap:14px">
+        <label class="field">
+          <span>Issue class</span>
+          <select name="class">
+            <option value="">Select&hellip;</option>
+            {% for cls in registry %}
+            <option value="{{ cls }}">{{ registry[cls].label }} ({{ cls }})</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="field">
+          <span>Severity</span>
+          <select name="severity">
+            <option value="">Select&hellip;</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-row cols-3">
+      <label class="field">
+        <span>Endpoint</span>
+        <input type="text" name="endpoint" placeholder="/login" required>
+      </label>
+      <label class="field">
+        <span>Parameter</span>
+        <input type="text" name="parameter" placeholder="username">
+      </label>
+      <label class="field">
+        <span>Method</span>
+        <input type="text" name="method" placeholder="POST" value="GET">
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Payload</span>
+      <input type="text" name="payload" placeholder="The exact request or parameter value" required>
+      <small class="field-hint">The exact request or payload that proves the primitive.</small>
+    </label>
+
+    <label class="field">
+      <span>Reproduction steps</span>
+      <textarea name="repro" rows="5" placeholder="1. Reproduce the issue&#10;2. Capture the exact request&#10;3. Confirm the effect&#10;4. Note the result" required></textarea>
+      <small class="field-hint">At least three steps so triage can re-run it from your writeup alone.</small>
+    </label>
+
+    <div class="form-row">
+      <label class="field">
+        <span>Impact</span>
+        <textarea name="impact" rows="3" placeholder="What an attacker can do because of this issue."></textarea>
+      </label>
+      <label class="field">
+        <span>Suggested fix</span>
+        <textarea name="fix" rows="3" placeholder="How you would remediate it."></textarea>
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Notes</span>
+      <textarea name="notes" rows="2" placeholder="Anything triage should know"></textarea>
+    </label>
+
+    <div id="report-result" class="mb"></div>
+    <button class="btn primary" type="submit">Submit report</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("report-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var form = this;
+  var out = document.getElementById("report-result");
+  var data = {};
+  ["title", "class", "severity", "endpoint", "parameter", "method", "payload", "repro", "impact", "fix", "notes"].forEach(function (k) {
+    data[k] = form.querySelector("[name=" + k + "]").value;
+  });
+  fetch(form.action, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(data)
+  }).then(function (r) { return r.json(); }).then(function (res) {
+    if (res.error) { out.innerHTML = '<div class="flash error">' + res.error + "</div>"; return; }
+    var match = res.matched ? " matched to " + res.matched : " not matched to any active issue";
+    out.innerHTML = '<div class="flash ok">Submitted ' + res.id + ", score " + res.score + match + ".</div>";
+    form.reset();
+  }).catch(function () { out.innerHTML = '<div class="flash error">Request failed</div>'; });
+});
+</script>
+{% endblock %}
