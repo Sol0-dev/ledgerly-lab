@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Dashboard &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Welcome back, {{ g.user.display }}</h1>
+    <p class="sub">Here is where your billing stands today.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn primary" href="{{ url_for('invoice_new') }}">New invoice</a>
+    <a class="btn" href="{{ url_for('reports') }}">Reports</a>
+  </div>
+</div>
+
+<div class="grid cols-3 mb">
+  <div class="stat">
+    <div class="label">Open invoices</div>
+    <div class="value">{{ open_count }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Outstanding balance</div>
+    <div class="value">{{ balance|money }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Active issues today</div>
+    <div class="value">{{ g.ctx.active_vulns|length }} <small>on this build</small></div>
+    <div class="foot">Find them, exploit them, report them.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Recent invoices <span class="hint"><a href="{{ url_for('invoices') }}">View all</a></span></h2>
+  <table class="data">
+    <thead>
+      <tr><th>Number</th><th>Client</th><th class="num">Amount</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      {% for inv in recent %}
+      <tr>
+        <td class="mono">{{ inv.number }}</td>
+        <td>{{ inv.client }}</td>
+        <td class="num">{{ inv.amount_cents|money }}</td>
+        <td><span class="badge {% if inv.status == 'paid' %}ok{% else %}warn{% endif %}">{{ inv.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
