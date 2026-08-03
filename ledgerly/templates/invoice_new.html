@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}New invoice &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>New invoice</h1>
+    <p class="sub">Add line items, then create the invoice. Line items are submitted as JSON.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Line items</h2>
+    <p class="muted">Add rows below. The running total updates as you go.</p>
+
+    <table class="data" id="lines-table">
+      <thead>
+        <tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th></th></tr>
+      </thead>
+      <tbody id="lines-body">
+        <tr data-row>
+          <td><input type="text" data-f="description" placeholder="Services rendered" style="min-width:180px"></td>
+          <td class="num"><input type="number" data-f="qty" value="1" min="0" step="1" style="width:70px"></td>
+          <td class="num"><input type="number" data-f="unit_price" value="0" min="0" step="0.01" style="width:90px"></td>
+          <td class="right"><button type="button" class="btn danger sm" data-remove>Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt">
+      <button type="button" class="btn sm" id="add-row">Add line</button>
+      <span class="right" style="float:right">
+        <strong>Total:</strong> <span id="grand-total">$0.00</span>
+      </span>
+    </div>
+
+    <div class="mt">
+      <button type="button" class="btn primary block" id="submit-lines">Create invoice</button>
+    </div>
+
+    <details class="tip">
+      <summary>Advanced: submit raw JSON</summary>
+      <p class="muted" style="margin-top:6px">The create endpoint accepts the line items as JSON:</p>
+      <div class="code-block" style="white-space:pre">POST /invoices/new&#10;lines=[{"description":"x","qty":1,"unit_price":1000}]</div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Client</h2>
+    <p class="muted">For this build the invoice is assigned to a new client automatically. Ownership is tied to your account.</p>
+    <label class="field">
+      <span>Client name</span>
+      <input type="text" value="New client" disabled>
+    </label>
+    <label class="field">
+      <span>Currency</span>
+      <input type="text" value="USD" disabled>
+    </label>
+  </div>
+</div>
+
+<form id="invoice-form" method="post" action="{{ url_for('invoice_new') }}" hidden>
+  <input type="hidden" name="lines" id="lines-input">
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var body = document.getElementById("lines-body");
+
+  function rowEl() {
+    var tr = document.querySelector("tr[data-row]").cloneNode(true);
+    tr.querySelectorAll("input").forEach(function (i) { i.value = i.type === "number" ? "0" : ""; });
+    tr.querySelector("[data-remove]").addEventListener("click", function () { if (body.children.length > 1) tr.remove(); recalc(); });
+    return tr;
+  }
+
+  document.getElementById("add-row").addEventListener("click", function () { body.appendChild(rowEl()); });
+  document.body.addEventListener("input", recalc);
+
+  function money(n) { return "$" + (n / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+  function recalc() {
+    var total = 0;
+    body.querySelectorAll("tr[data-row]").forEach(function (tr) {
+      var q = parseFloat(tr.querySelector('[data-f="qty"]').value) || 0;
+      var p = parseFloat(tr.querySelector('[data-f="unit_price"]').value) || 0;
+      total += q * p;
+    });
+    document.getElementById("grand-total").textContent = money(total);
+  }
+  recalc();
+
+  document.getElementById("submit-lines").addEventListener("click", function () {
+    var lines = [];
+    body.querySelectorAll("tr[data-row]").forEach(function (tr) {
+      lines.push({
+        description: tr.querySelector('[data-f="description"]').value || "Line item",
+        qty: parseInt(tr.querySelector('[data-f="qty"]').value, 10) || 0,
+        unit_price: Math.round((parseFloat(tr.querySelector('[data-f="unit_price"]').value) || 0) * 100)
+      });
+    });
+    if (!lines.length) return;
+    document.getElementById("lines-input").value = JSON.stringify(lines);
+    document.getElementById("invoice-form").submit();
+  });
+})();
+</script>
+{% endblock %}
