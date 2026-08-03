@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Triage &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Triage</h1>
+    <p class="sub">Read-only view of how reports were dispositioned. Accept/reject runs server-side via the CLI.</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data">
+    <thead>
+      <tr><th>Report</th><th>Title</th><th>Matched</th><th class="num">Score</th><th>Triage</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td class="mono nowrap">{{ r.id }}</td>
+        <td>{{ r.title }}</td>
+        <td>
+          {% if r.matched_class %}<span class="badge accent">{{ registry[r.matched_class].label }}</span>
+          {% else %}<span class="badge neutral">unmatched</span>{% endif %}
+        </td>
+        <td class="num">{{ r.score }}</td>
+        <td>
+          {% if r.triage_status == 'accepted' %}<span class="badge ok">accepted</span>
+          {% elif r.triage_status == 'rejected' %}<span class="badge danger">rejected</span>
+          {% else %}<span class="badge warn">pending</span>{% endif %}
+        </td>
+        <td class="faint">{{ r.triage_note or '-' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No reports yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Evidence</h2>
+  <p class="muted">Expand a report to see the full writeup triage saw.</p>
+  {% for r in reports %}
+  <details class="tip">
+    <summary>{{ r.id }} &middot; {{ r.title }}</summary>
+    <div class="mt">
+      <p><span class="muted">Endpoint:</span> <code class="mono">{{ r.endpoint or '-' }}</code>
+      &nbsp; <span class="muted">Payload:</span> <code class="mono">{{ r.payload or '-' }}</code></p>
+      {% if r.repro %}<pre class="code-block" style="white-space:pre-wrap">{{ r.repro }}</pre>{% endif %}
+      {% if r.impact %}<p class="muted">Impact: {{ r.impact }}</p>{% endif %}
+      {% if r.fix %}<p class="muted">Suggested fix: {{ r.fix }}</p>{% endif %}
+    </div>
+  </details>
+  {% endfor %}
+</div>
+{% endblock %}
