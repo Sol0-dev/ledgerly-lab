@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Team &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Team</h1>
+    <p class="sub">People in this workspace.</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data">
+    <thead>
+      <tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th></tr>
+    </thead>
+    <tbody>
+      {% for m in members %}
+      <tr>
+        <td>{{ m.display }}</td>
+        <td class="mono">{{ m.username }}</td>
+        <td>{{ m.email }}</td>
+        <td><span class="badge {% if m.role == 'admin' %}danger{% else %}neutral{% endif %}">{{ m.role }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Update your profile</h2>
+  <p class="muted">Update your profile through the API. See the API docs for the endpoint.</p>
+  <div class="code-block" style="white-space:pre">curl -X PUT {{ ctx.tech.api }}/team/me \
+  -H "Content-Type: application/json" \
+  -d '{"display":"Hunter One"}'</div>
+</div>
+
+{% if elev_flag %}
+<div class="card">
+  <h2>Capture</h2>
+  <p class="muted">A marker from this workspace has surfaced.</p>
+  <div class="code-block mono">{{ elev_flag }}</div>
+</div>
+{% endif %}
+{% endblock %}
