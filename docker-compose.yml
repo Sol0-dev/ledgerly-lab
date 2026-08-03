@@ -1,0 +1,13 @@
+services:
+  ledgerly:
+    build: .
+    image: ledgerly-lab
+    container_name: ledgerly
+    ports:
+      - "5001:5001"
+    volumes:
+      - ledgerly-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  ledgerly-data:
