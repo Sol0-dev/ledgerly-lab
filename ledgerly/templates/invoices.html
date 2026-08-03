@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Invoices &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Invoices</h1>
+    <p class="sub">Everything billed from this workspace.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn primary" href="{{ url_for('invoice_new') }}">New invoice</a>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data">
+    <thead>
+      <tr><th>Number</th><th>Client</th><th class="num">Amount</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for inv in invoices %}
+      <tr>
+        <td class="mono"><a href="{{ url_for('invoice_detail', inv_id=inv.id) }}">{{ inv.number }}</a></td>
+        <td>{{ inv.client }}</td>
+        <td class="num">{{ inv.amount_cents|money }}</td>
+        <td>
+          <span class="badge {% if inv.status == 'paid' %}ok{% elif inv.status == 'draft' %}neutral{% else %}warn{% endif %}">{{ inv.status }}</span>
+        </td>
+        <td class="right"><a href="{{ url_for('invoice_detail', inv_id=inv.id) }}">View</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">No invoices yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
