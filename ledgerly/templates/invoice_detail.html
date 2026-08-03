@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.number }} &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ invoice.number }}</h1>
+    <p class="sub">Billed to {{ invoice.client }} &middot; owner #{{ invoice.owner_id }}</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge {% if invoice.status == 'paid' %}ok{% elif invoice.status == 'draft' %}neutral{% else %}warn{% endif %}">{{ invoice.status }}</span>
+    <a class="btn" href="{{ url_for('invoices') }}">All invoices</a>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data">
+    <thead>
+      <tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Total</th></tr>
+    </thead>
+    <tbody>
+      {% set running = namespace(total=0) %}
+      {% for line in lines %}
+      {% set line_total = line.qty * line.unit_price %}
+      {% set running.total = running.total + line_total %}
+      <tr>
+        <td>{{ line.description }}</td>
+        <td class="num">{{ line.qty }}</td>
+        <td class="num">{{ line.unit_price|money }}</td>
+        <td class="num">{{ line_total|money }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" class="right"><strong>Total due</strong></td>
+        <td class="num"><strong>{{ running.total|money }}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+{% if logic_flag %}
+<div class="card">
+  <h2>Capture</h2>
+  <p class="muted">A marker from this workspace has surfaced.</p>
+  <div class="code-block mono">{{ logic_flag }}</div>
+</div>
+{% endif %}
+{% endblock %}
