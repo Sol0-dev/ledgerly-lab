@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}API keys &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>API keys</h1>
+    <p class="sub">Programmatic access to your workspace. Key shown once, keep it private.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Your key</h2>
+    <div class="code-block">
+      <span class="c"># Header used for authenticated calls</span>
+      Authorization: Bearer {{ ctx.api_key[:8] }}...
+    </div>
+    <p class="muted mt">Calls without a key fall back to your browser session.</p>
+  </div>
+
+  <div class="card">
+    <h2>Base URL</h2>
+    <div class="code-block">{{ ctx.tech.api }}</div>
+    <p class="muted mt">All endpoints below live under this prefix. The prefix differs between deployments.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Endpoints</h2>
+  <table class="data">
+    <thead>
+      <tr><th style="width:90px">Method</th><th>Path</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ ctx.tech.api }}/clients?filter=</td>
+        <td>List your clients. The optional <code class="mono">filter</code> is a JSON query document.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ ctx.tech.api }}/invoices/&lt;id&gt;</td>
+        <td>Fetch a single invoice by id.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-put">PUT</span></td>
+        <td class="mono">{{ ctx.tech.api }}/team/me</td>
+        <td>Update your profile via the API.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Examples</h2>
+  <div class="code-block" style="white-space:pre">curl -H "Authorization: Bearer lk_live_..." \
+  {{ ctx.tech.api }}/clients
+
+curl -X PUT {{ ctx.tech.api }}/team/me \
+  -H "Content-Type: application/json" \
+  -d '{"display":"Hunter One"}'</div>
+</div>
+{% endblock %}
