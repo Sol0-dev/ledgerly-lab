@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Admin &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Admin</h1>
+    <p class="sub">Workspace administration. Admin-only area.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Users</h2>
+    <table class="data">
+      <thead>
+        <tr><th>Username</th><th>Email</th><th>Role</th></tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="mono">{{ u.username }}</td>
+          <td>{{ u.email }}</td>
+          <td><span class="badge {% if u.role == 'admin' %}danger{% else %}neutral{% endif %}">{{ u.role }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Workspace</h2>
+    <table class="data">
+      <tbody>
+        <tr><td class="muted">Invoices on record</td><td class="num">{{ inv_count }}</td></tr>
+        <tr><td class="muted">Today</td><td class="num">{{ ctx.day }}</td></tr>
+        <tr><td class="muted">Version</td><td class="num">{{ ctx.version }}</td></tr>
+        <tr><td class="muted">Active issues</td><td class="num">{{ ctx.active_vulns|length }}</td></tr>
+      </tbody>
+    </table>
+    <form method="post" action="{{ url_for('admin_reset') }}" class="mt"
+          onsubmit="return confirm('Re-seed today with a fresh draw? All reports, flags and exploit state for today will be wiped.');">
+      <button class="btn danger" type="submit">Re-seed today's draw</button>
+    </form>
+    <p class="muted mt">Re-seeding redraws the three active issue classes, the tech fingerprint, and all per-day secrets.</p>
+  </div>
+</div>
+
+{% if flag %}
+<div class="card">
+  <h2>Capture</h2>
+  <p class="muted">A marker from this workspace has surfaced.</p>
+  <div class="code-block mono">{{ flag }}</div>
+</div>
+{% endif %}
+{% endblock %}
