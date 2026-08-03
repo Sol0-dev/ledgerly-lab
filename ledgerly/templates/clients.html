@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Clients &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Clients</h1>
+    <p class="sub">Accounts you bill. Private clients are hidden from list views.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Client list</h2>
+    <table class="data">
+      <thead>
+        <tr><th>Name</th><th>Access</th></tr>
+      </thead>
+      <tbody>
+        {% for c in clients %}
+        <tr>
+          <td>{{ c.name }}</td>
+          <td>
+            <span class="badge {% if c.access == 'private' %}warn{% else %}neutral{% endif %}">{{ c.access }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Add a client</h2>
+    <form method="post" action="{{ url_for('client_new') }}">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" name="name" required>
+      </label>
+      <label class="field">
+        <span>Access</span>
+        <select name="access">
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </select>
+      </label>
+      <button class="btn primary" type="submit">Add client</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
