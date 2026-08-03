@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Reports &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Reports</h1>
+    <p class="sub">Submissions for today's build. Flags are awarded when triage accepts a report.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn primary" href="{{ url_for('report_new') }}">Report a finding</a>
+  </div>
+</div>
+
+<div class="card">
+  <table class="data">
+    <thead>
+      <tr><th>Report</th><th>Title</th><th>Class</th><th>Severity</th><th class="num">Score</th><th>Triage</th></tr>
+    </thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td class="mono nowrap">{{ r.id }}</td>
+        <td>{{ r.title }}</td>
+        <td>
+          {% if r.matched_class %}
+            <span class="badge accent">{{ registry[r.matched_class].label }}</span>
+          {% else %}
+            <span class="badge neutral">{{ r.class or 'unmatched' }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.severity %}
+            <span class="badge badge-{{ r.severity }}">{{ r.severity }}</span>
+          {% else %}<span class="faint">-</span>{% endif %}
+        </td>
+        <td class="num">{{ r.score }}</td>
+        <td>
+          {% if r.triage_status == 'accepted' %}
+            <span class="badge ok">accepted</span>
+          {% elif r.triage_status == 'rejected' %}
+            <span class="badge danger">rejected</span>
+          {% else %}
+            <span class="badge warn">pending</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No reports yet. Confirm a primitive, then report it.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
