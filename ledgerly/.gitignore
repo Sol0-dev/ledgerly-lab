@@ -1,6 +1,0 @@
-# Runtime state
-# Never commit local run data, reports, or Python caches.
-data/
-reports/
-__pycache__/
-*.pyc
