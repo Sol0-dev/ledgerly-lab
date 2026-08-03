@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Analytics &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Analytics</h1>
+    <p class="sub">How you hunt, measured on this day and against your history.</p>
+  </div>
+</div>
+
+<div class="grid cols-3 mb">
+  <div class="stat">
+    <div class="label">Capability index</div>
+    <div class="value">{{ data.capability }} <small>/ 1.0</small></div>
+    <div class="progress mt" style="margin-top:8px"><i style="width:{{ (data.capability * 100)|round|int }}%"></i></div>
+    <div class="foot">{{ data.found_total }} of {{ data.active_total }} active issues found</div>
+  </div>
+  <div class="stat">
+    <div class="label">Mean time to find</div>
+    <div class="value">{% if data.effective_mean_t_find is not none %}{{ (data.effective_mean_t_find / 60)|round|int }}m{% else %}-{% endif %}</div>
+    <div class="foot">across confirmed issues this day</div>
+  </div>
+  <div class="stat">
+    <div class="label">Report accuracy</div>
+    <div class="value">
+      {% if data.class_accuracy is not none %}{{ (data.class_accuracy * 100)|round|int }}%{% else %}-{% endif %}
+      <small>class / {% if data.severity_accuracy is not none %}{{ (data.severity_accuracy * 100)|round|int }}%{% else %}-{% endif %} sev</small>
+    </div>
+    <div class="foot">{{ data.report_count }} report(s) &middot; mean score {{ data.mean_report_score or '-' }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Per-class</h2>
+  <table class="data">
+    <thead>
+      <tr><th>Class</th><th>Status</th><th>Found</th><th>Reports</th><th>Best score</th><th>Reference severity</th></tr>
+    </thead>
+    <tbody>
+      {% for cls, v in data.per_class.items() if v.found or v.validated or v.reports %}
+      <tr>
+        <td>{{ registry[cls].label }} <span class="faint mono">({{ cls }})</span></td>
+        <td>
+          {% if v.validated %}<span class="badge ok">validated</span>
+          {% elif v.found %}<span class="badge warn">exploited</span>
+          {% else %}<span class="badge danger">reported</span>{% endif %}
+        </td>
+        <td>{% if v.found %}<span class="badge ok">yes</span>{% else %}<span class="faint">no</span>{% endif %}</td>
+        <td>{{ v.reports }}</td>
+        <td class="num">{{ v.best_score or '-' }}</td>
+        <td><span class="badge badge-{{ registry[cls].severity }}">{{ registry[cls].severity }}</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No findings confirmed yet. Classes appear here once you have found them.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>History vs today</h2>
+  <p class="muted">Validated findings from previous days (awarded flags) compared with the wiki's reference solve rates.</p>
+  <table class="data">
+    <thead>
+      <tr><th>Day</th><th>Class</th><th>Found</th><th class="num">TTV (s)</th><th class="num">Report score</th></tr>
+    </thead>
+    <tbody>
+      {% for h in data.history %}
+      <tr>
+        <td class="mono">{{ h.day }}</td>
+        <td>{{ registry[h.class].label }}</td>
+        <td>{% if h.found %}<span class="badge ok">yes</span>{% else %}<span class="badge danger">no</span>{% endif %}</td>
+        <td class="num">{{ h.t_found|int if h.t_found else '-' }}</td>
+        <td class="num">{{ h.score or '-' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">No validated findings on record yet. Flags land here after triage.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Improvement tips</h2>
+  <ul class="muted" style="padding-left:20px;line-height:1.7">
+    {% for t in data.tips %}<li>{{ t }}</li>{% endfor %}
+  </ul>
+</div>
+{% endblock %}
