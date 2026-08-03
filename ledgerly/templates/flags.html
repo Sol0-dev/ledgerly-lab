@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Capture flags &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Capture flags</h1>
+    <p class="sub">Each issue on this build hides a <span class="mono">FLAG{&hellip;}</span> on its surface.
+    Find it, then submit it here to bank the capture.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Slots</h2>
+    <p class="muted">The slots are positional only - they never say which issue a flag belongs to.
+    A flag only banks if the issue behind it was actually confirmed on the server.</p>
+    <div class="slot-list" style="display:grid;gap:10px;margin-top:12px">
+      {% for s in slots %}
+      <div class="slot" style="display:flex;align-items:center;justify-content:space-between;gap:10px;
+        padding:12px 14px;border-radius:8px;
+        border:1px solid {% if s.captured %}rgba(46,204,113,.5){% else %}rgba(127,127,127,.25){% endif %}">
+        <span class="mono" style="font-weight:600">Slot {{ s.slot }}</span>
+        {% if s.captured %}
+        <span class="badge ok" style="background:rgba(46,204,113,.12);color:#2ecc71;padding:4px 10px;border-radius:999px">
+          captured
+        </span>
+        {% else %}
+        <span class="badge" style="padding:4px 10px;border-radius:999px">open</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Submit a flag</h2>
+    <p class="muted">Paste the exact <span class="mono">FLAG{&hellip;}</span> string you found. Flags are checked
+    against today's build, so a flag from another build will not bank.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, msg in messages %}
+        <div class="flash {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="post" action="{{ url_for('flags') }}" class="mb" style="margin-top:12px">
+      <label class="field">
+        <span>Flag</span>
+        <input type="text" name="flag" placeholder="FLAG{...}" class="mono" required
+               autocomplete="off" autocapitalize="off" spellcheck="false">
+      </label>
+      <button class="btn primary" type="submit" style="margin-top:10px">Bank flag</button>
+    </form>
+    <p class="muted faint" style="font-size:13px">
+      Captured {{ slots|selectattr('captured')|list|length }} of {{ slots|length }}.
+    </p>
+  </div>
+</div>
+{% endblock %}
