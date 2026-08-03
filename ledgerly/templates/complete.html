@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Day complete &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="auth-wrap" style="min-height:60vh">
+  <div style="max-width:640px;width:100%">
+    <div class="card" style="text-align:center;padding:36px 40px">
+      <h1 style="font-size:26px;margin:0 0 8px">All three issues captured.</h1>
+      <p class="muted">The day is locked. Flags are awarded and history is written.</p>
+
+      <div class="grid cols-3 mt" style="margin-top:20px">
+        <div class="stat"><div class="label">Capability</div><div class="value">{{ data.capability }}</div></div>
+        <div class="stat"><div class="label">Found</div><div class="value">{{ data.found_total }}/{{ data.active_total }}</div></div>
+        <div class="stat"><div class="label">Flags</div><div class="value">{{ data.flags }}</div></div>
+      </div>
+
+      <div class="mt" style="text-align:left">
+        <table class="data">
+          <thead><tr><th>Class</th><th>Status</th><th class="num">TTV</th></tr></thead>
+          <tbody>
+            {% for cls, v in data.per_class.items() %}
+            {% if v.active %}
+            <tr>
+              <td>{{ registry[cls].label }}</td>
+              <td><span class="badge ok">validated</span></td>
+              <td class="num">{% if v.ttv is not none %}{{ (v.ttv / 60)|round|int }}m{% else %}-{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="page-actions" style="justify-content:center;margin-top:22px">
+        <a class="btn primary" href="{{ url_for('analytics') }}">Review analytics</a>
+        <a class="btn" href="{{ url_for('reports') }}">Reports</a>
+      </div>
+      <p class="form-hint" style="margin-top:16px">Tomorrow the triage acceptances land as flags and this day moves into your history.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.LedgerlyOnComplete = function (n) {
+  var i = 0;
+  var iv = setInterval(function () {
+    if (i >= 4) { clearInterval(iv); return; }
+    window.LedgerlyFX.burst(110, i * 40);
+    i++;
+  }, 420);
+};
+</script>
+{% endblock %}
