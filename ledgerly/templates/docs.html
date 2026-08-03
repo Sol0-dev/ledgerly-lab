@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}API docs &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>API reference</h1>
+    <p class="sub">The public surface of this deployment. Base URL: <code class="mono">{{ api }}</code></p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Authentication</h2>
+  <p>Sessions authenticate via the <code class="mono">{{ ctx.tech.cookie }}</code> cookie. API calls can also send
+  <code class="mono">Authorization: Bearer lk_live_...</code>.</p>
+</div>
+
+<div class="card">
+  <h2>Endpoints</h2>
+  <table class="data">
+    <thead>
+      <tr><th style="width:90px">Method</th><th>Path</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ api }}/clients</td>
+        <td>List your clients.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ api }}/clients?filter=&lt;json&gt;</td>
+        <td>Filter clients with a JSON query document.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ api }}/invoices/&lt;id&gt;</td>
+        <td>Fetch a single invoice by id.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-put">PUT</span></td>
+        <td class="mono">{{ api }}/team/me</td>
+        <td>Update your own profile fields.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Example</h2>
+  <div class="code-block" style="white-space:pre">curl {{ request.url_root }}clients</div>
+  <p class="muted mt">Replace <code class="mono">{{ request.url_root }}</code> with your tunnel or host if you are testing remotely.</p>
+</div>
+{% endblock %}
