@@ -109,6 +109,25 @@ CREATE TABLE IF NOT EXISTS events (
     class  TEXT,
     detail TEXT
 );
+CREATE TABLE IF NOT EXISTS touches (
+    day     TEXT NOT NULL,
+    surface TEXT NOT NULL,
+    ts      REAL NOT NULL,
+    PRIMARY KEY (day, surface)
+);
+CREATE TABLE IF NOT EXISTS coupons (
+    day         TEXT NOT NULL,
+    code        TEXT NOT NULL,
+    uses        INTEGER NOT NULL DEFAULT 0,
+    last_used   REAL,
+    PRIMARY KEY (day, code)
+);
+CREATE TABLE IF NOT EXISTS api_keys (
+    day         TEXT NOT NULL,
+    key         TEXT NOT NULL,
+    created_at  REAL NOT NULL,
+    PRIMARY KEY (day, key)
+);
 """
 
 
@@ -166,6 +185,10 @@ def ensure_day_state(day: str, ctx: dict[str, Any]) -> dict[str, Any]:
             conn.execute(
                 "INSERT OR IGNORE INTO vuln_state (day, class) VALUES (?,?)", (day, cls)
             )
+        if ctx.get("chain"):
+            conn.execute(
+                "INSERT OR IGNORE INTO vuln_state (day, class) VALUES (?,?)", (day, "chain")
+            )
     return state
 
 
@@ -183,10 +206,14 @@ def reset_day(day: str, ctx: dict[str, Any]) -> None:
             (day, ctx["reset_count"], json.dumps(ctx), time.time()),
         )
         for table in ("vuln_state", "reports", "flags", "captures", "events", "history",
-                      "users", "clients", "invoices"):
+                      "users", "clients", "invoices", "touches", "coupons", "api_keys"):
             conn.execute(f"DELETE FROM {table} WHERE day=?", (day,))
         for cls in ctx["active_vulns"]:
             conn.execute("INSERT INTO vuln_state (day, class) VALUES (?,?)", (day, cls))
+        # The compound vuln is tracked as its own row so a chain can be
+        # reported and validated like any other class.
+        if ctx.get("chain"):
+            conn.execute("INSERT OR IGNORE INTO vuln_state (day, class) VALUES (?,?)", (day, "chain"))
 
 
 # --------------------------------------------------------------------------
@@ -234,6 +261,16 @@ def day_vuln_rows(day: str) -> list[dict[str, Any]]:
             (day,),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def exploited_classes_all_days() -> set[str]:
+    """Distinct classes marked exploited across every day - the lab-wide
+    confirmed count, independent of any single day's draw."""
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT DISTINCT class FROM vuln_state WHERE status='exploited'"
+        ).fetchall()
+    return {r["class"] for r in rows}
 
 
 # --------------------------------------------------------------------------
@@ -344,6 +381,16 @@ def captured_slots(day: str) -> set[int]:
     return {r["slot"] for r in rows}
 
 
+def day_captures(day: str) -> list[dict[str, Any]]:
+    """All capture rows for the day (slot + timestamp), for speed analytics."""
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT slot, captured_at FROM captures WHERE day=? ORDER BY captured_at",
+            (day,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 def claim_captures(day: str) -> list[dict[str, Any]]:
     """Return the day's captures that have not been polled yet (slot only -
     no class disclosure), then mark them polled so the confetti bursts once."""
@@ -362,23 +409,31 @@ def claim_captures(day: str) -> list[dict[str, Any]]:
 def capture_flag(day: str, ctx: dict[str, Any], flag: str) -> dict[str, Any]:
     """Validate a submitted flag against today's draw and record the capture.
 
-    A flag only captures when (a) it is one of today's flags and (b) the class
-    behind it has actually been exploited server-side. Both keep the lab honest:
-    the interface is the player's ledger, the server still decides.
+    Any flag that belongs to today's draw banks immediately - submission is
+    allowed anytime the correct FLAG string is found on its surface. The
+    chain flag banks the same way once its string is discovered.
     """
     active = ctx.get("active_vulns", [])
     flags = ctx.get("flags", [])
+    chain = ctx.get("chain") or {}
     flag = (flag or "").strip()
     if not flag:
         return {"ok": False, "error": "A flag is required."}
+
+    if chain.get("flag") == flag:
+        slot = len(active) + 1
+        with _connect() as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO captures (day, slot, captured_at) VALUES (?,?,?)",
+                (day, slot, time.time()),
+            )
+        return {"ok": True, "slot": slot}
+
     if flag not in flags:
         return {"ok": False, "error": "No active issue matches that flag. Verify it on the surface where you found it."}
     idx = flags.index(flag)
     if idx >= len(active):
         return {"ok": False, "error": "No active issue matches that flag."}
-    cls = active[idx]
-    if vuln_status(day, cls) == "active":
-        return {"ok": False, "error": "The issue behind this flag has not been confirmed yet."}
     slot = idx + 1
     with _connect() as conn:
         conn.execute(
@@ -386,6 +441,132 @@ def capture_flag(day: str, ctx: dict[str, Any], flag: str) -> dict[str, Any]:
             (day, slot, time.time()),
         )
     return {"ok": True, "slot": slot}
+
+
+def release_capture(day: str, slot: int) -> None:
+    """Per-flag reset: un-bank a single captured slot.
+
+    The capture row is removed (so the flag can be re-submitted), and the day
+    is unlocked if it had been completed by that capture.
+    """
+    with _connect() as conn:
+        conn.execute("DELETE FROM captures WHERE day=? AND slot=?", (day, slot))
+        conn.execute("UPDATE day_state SET completed=0 WHERE day=?", (day,))
+
+
+def set_day_completed(day: str, completed: bool) -> None:
+    with _connect() as conn:
+        conn.execute(
+            "UPDATE day_state SET completed=? WHERE day=?", (1 if completed else 0, day)
+        )
+
+
+def touch(day: str, surface: str) -> None:
+    """Record that the hunter reached a surface (creativity/exploratory)."""
+    with _connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO touches (day, surface, ts) VALUES (?,?,?)",
+            (day, surface, time.time()),
+        )
+
+
+def touched_surfaces(day: str) -> list[dict[str, Any]]:
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT surface, ts FROM touches WHERE day=? ORDER BY ts", (day,)
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def coupon_get(day: str, code: str) -> dict[str, Any] | None:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT code, uses, last_used FROM coupons WHERE day=? AND code=?",
+            (day, code),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def coupon_redeem(day: str, code: str) -> dict[str, Any]:
+    """TOCTOU-friendly redemption used by the race primitive.
+
+    The check and the increment are deliberately separate transactions so a
+    parallel burst can double-spend, mirroring a real missing-lock bug.
+    """
+    now = time.time()
+    with _connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO coupons (day, code, uses, last_used) VALUES (?,?,0,?)",
+            (day, code, now),
+        )
+    before = coupon_get(day, code)["uses"]
+    with _connect() as conn:
+        conn.execute(
+            "UPDATE coupons SET uses=uses+1, last_used=? WHERE day=? AND code=?",
+            (now, day, code),
+        )
+    after = coupon_get(day, code)["uses"]
+    # TOCTOU signal: if another redeem slipped in between our check and our
+    # increment, the counter jumped by more than one.
+    return {"before": before, "after": after, "uses": after, "raced": after - before > 1}
+
+
+# --------------------------------------------------------------------------
+# api keys (token lifecycle)
+# --------------------------------------------------------------------------
+
+def seed_api_key(day: str, key: str) -> None:
+    """Plant today's initial key. The vulnerable rotation endpoint then adds
+    keys without invalidating the previous ones."""
+    with _connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO api_keys (day, key, created_at) VALUES (?,?,?)",
+            (day, key, time.time()),
+        )
+
+
+def add_api_key(day: str, key: str) -> None:
+    """Rotation without revocation: the old key remains valid."""
+    with _connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO api_keys (day, key, created_at) VALUES (?,?,?)",
+            (day, key, time.time()),
+        )
+
+
+def current_api_key(day: str) -> str | None:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT key FROM api_keys WHERE day=? ORDER BY created_at DESC LIMIT 1",
+            (day,),
+        ).fetchone()
+    return row["key"] if row else None
+
+
+def is_valid_api_key(day: str, key: str) -> bool:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM api_keys WHERE day=? AND key=?", (day, key)
+        ).fetchone()
+    return row is not None
+
+
+def api_key_list(day: str) -> list[str]:
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT key FROM api_keys WHERE day=? ORDER BY created_at", (day,)
+        ).fetchall()
+    return [r["key"] for r in rows]
+
+
+def replace_all_api_keys(day: str, key: str) -> None:
+    """Proper rotation (vuln inactive): old keys are dropped."""
+    with _connect() as conn:
+        conn.execute("DELETE FROM api_keys WHERE day=?", (day,))
+        conn.execute(
+            "INSERT INTO api_keys (day, key, created_at) VALUES (?,?,?)",
+            (day, key, time.time()),
+        )
 
 
 def capture_rows(day: str) -> list[dict[str, Any]]:

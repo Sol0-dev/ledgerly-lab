@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Search &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Workspace search</h1>
+    <p class="sub">Search invoices, clients, and notes.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width:720px">
+  <form method="get" action="{{ url_for('search') }}">
+    <label class="field">
+      <span>Query</span>
+      <input type="text" name="q" value="{{ q }}" placeholder="invoice #1042 or client name">
+    </label>
+    <button class="btn primary" type="submit" style="margin-top:10px">Search</button>
+  </form>
+  {% if q %}
+  <div class="mt">
+    <p class="muted">Results for <span class="mono">{{ q }}</span> ({{ results|length }})</p>
+    {% if results %}
+    <table class="data">
+      <thead><tr><th>Kind</th><th>Result</th></tr></thead>
+      <tbody>
+        {% for r in results %}
+        <tr><td class="mono">{{ r.kind }}</td><td>{{ r.label }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="flash info">No matches.</div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

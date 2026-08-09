@@ -5,7 +5,7 @@
   <div class="auth-card" style="text-align:center">
     <h1 style="font-size:34px;color:var(--accent);margin:0">{{ code }}</h1>
     <p class="muted" style="margin:8px 0 4px">{{ message }}</p>
-    <a class="btn" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+    <a class="btn" href="{{ route_url('dashboard') }}">Back to dashboard</a>
   </div>
 </div>
 {% endblock %}

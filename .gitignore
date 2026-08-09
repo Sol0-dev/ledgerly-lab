@@ -4,3 +4,4 @@ data/
 reports/
 __pycache__/
 *.pyc
+server.log

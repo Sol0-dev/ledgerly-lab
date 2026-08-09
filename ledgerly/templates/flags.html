@@ -13,16 +13,21 @@
   <div class="card">
     <h2>Slots</h2>
     <p class="muted">The slots are positional only - they never say which issue a flag belongs to.
-    A flag only banks if the issue behind it was actually confirmed on the server.</p>
+    A flag banks the moment its exact string is submitted.</p>
     <div class="slot-list" style="display:grid;gap:10px;margin-top:12px">
       {% for s in slots %}
       <div class="slot" style="display:flex;align-items:center;justify-content:space-between;gap:10px;
         padding:12px 14px;border-radius:8px;
         border:1px solid {% if s.captured %}rgba(46,204,113,.5){% else %}rgba(127,127,127,.25){% endif %}">
-        <span class="mono" style="font-weight:600">Slot {{ s.slot }}</span>
+        <span class="mono" style="font-weight:600">Slot {{ s.slot }}{% if s.chain %} <span class="badge accent" style="padding:2px 8px;border-radius:999px;font-size:11px">compound</span>{% endif %}</span>
         {% if s.captured %}
-        <span class="badge ok" style="background:rgba(46,204,113,.12);color:#2ecc71;padding:4px 10px;border-radius:999px">
-          captured
+        <span style="display:flex;align-items:center;gap:8px">
+          <span class="badge ok" style="background:rgba(46,204,113,.12);color:#2ecc71;padding:4px 10px;border-radius:999px">
+            captured
+          </span>
+          <form method="post" action="{{ url_for('flags_reset', slot=s.slot) }}" style="margin:0">
+            <button class="btn sm" type="submit" title="Release this capture to test the surface again">reset</button>
+          </form>
         </span>
         {% else %}
         <span class="badge" style="padding:4px 10px;border-radius:999px">open</span>
@@ -50,7 +55,7 @@
       <button class="btn primary" type="submit" style="margin-top:10px">Bank flag</button>
     </form>
     <p class="muted faint" style="font-size:13px">
-      Captured {{ slots|selectattr('captured')|list|length }} of {{ slots|length }}.
+      Captured {{ slots|selectattr('captured')|list|length }} of {{ lab_total_flags() }}.
     </p>
   </div>
 </div>

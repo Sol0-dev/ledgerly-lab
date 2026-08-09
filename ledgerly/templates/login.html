@@ -1,33 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Sign in &middot; Ledgerly{% endblock %}
 {% block content %}
-<div class="auth-wrap">
-  <div class="auth-card">
-    <div class="brand">
-      <span class="brand-mark">L</span>
-      <span>Ledgerly</span>
+<div class="auth-split{% if is_meta %} auth-split-center{% endif %}">
+  {% if not is_meta %}
+  <div class="auth-art">
+    <img class="auth-art-img" src="{{ url_for('static', filename='images/auth-hero.svg') }}" alt="Ledgerly illustration">
+    <h2>Invoice management for growing teams</h2>
+    <p class="auth-art-sub">Send invoices, track clients, and keep every dollar accounted for in one place.</p>
+    <ul class="auth-art-points">
+      <li>Reusable client &amp; team workspaces</li>
+      <li>Live status cards on every invoice</li>
+      <li>Export, import, and reporting built in</li>
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="auth-panel">
+    <div class="auth-card">
+      <div class="brand">
+        <span class="brand-mark">L</span>
+        <span>Ledgerly</span>
+      </div>
+      <h1>{{ ctx.login_copy }}</h1>
+      <p class="tagline">Invoice management for growing teams</p>
+
+      {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+
+      <form method="post" action="{{ url_for('login') }}">
+        <label class="field">
+          <span>Username</span>
+          <input type="text" name="username" autocomplete="username" autofocus required>
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn primary block" type="submit">Sign in</button>
+      </form>
+
+      <p class="form-hint">
+        Demo account: <span class="mono">hunter</span> / <span class="mono">hunter-pass</span>
+        &middot; <a href="{{ url_for('register') }}">Create an account</a>
+      </p>
     </div>
-    <h1>{{ ctx.login_copy }}</h1>
-    <p class="tagline">Invoice management for growing teams</p>
-
-    {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
-
-    <form method="post" action="{{ url_for('login') }}">
-      <label class="field">
-        <span>Username</span>
-        <input type="text" name="username" autocomplete="username" autofocus required>
-      </label>
-      <label class="field">
-        <span>Password</span>
-        <input type="password" name="password" autocomplete="current-password" required>
-      </label>
-      <button class="btn primary block" type="submit">Sign in</button>
-    </form>
-
-    <p class="form-hint">
-      Demo account: <span class="mono">hunter</span> / <span class="mono">hunter-pass</span>
-      &middot; <a href="{{ url_for('register') }}">Create an account</a>
-    </p>
   </div>
 </div>
 {% endblock %}

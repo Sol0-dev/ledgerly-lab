@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Profile &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Profile</h1>
+    <p class="sub">Your display identity on this workspace.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Your identity</h2>
+    {% if xss_active %}
+    <div class="code-block" style="white-space:pre-wrap">{{ g.user.display|safe }}</div>
+    {% else %}
+    <div class="code-block" style="white-space:pre-wrap">{{ g.user.display }}</div>
+    {% endif %}
+    <p class="muted mt">{{ g.user.username }} &middot; {{ g.user.email }} &middot; role: {{ g.user.role }}</p>
+    {% if xss_flag %}
+    <div class="card mt">
+      <p class="muted">A stored script rendered on read. Reference token:</p>
+      <div class="code-block mono">{{ xss_flag }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Edit display name</h2>
+    <form method="post" action="{{ url_for('profile') }}">
+      <label class="field">
+        <span>Display name</span>
+        <input type="text" name="display" value="{{ g.user.display }}" maxlength="200">
+      </label>
+      <button class="btn primary" type="submit" style="margin-top:10px">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

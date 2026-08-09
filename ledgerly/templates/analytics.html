@@ -3,87 +3,102 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>Analytics</h1>
-    <p class="sub">How you hunt, measured on this day and against your history.</p>
+    <h1>Hunting report</h1>
+    <p class="sub">One picture of how you hunt: speed, coverage, complexity, impact.</p>
   </div>
 </div>
 
-<div class="grid cols-3 mb">
+<div class="card mb">
   <div class="stat">
-    <div class="label">Capability index</div>
-    <div class="value">{{ data.capability }} <small>/ 1.0</small></div>
-    <div class="progress mt" style="margin-top:8px"><i style="width:{{ (data.capability * 100)|round|int }}%"></i></div>
-    <div class="foot">{{ data.found_total }} of {{ data.active_total }} active issues found</div>
-  </div>
-  <div class="stat">
-    <div class="label">Mean time to find</div>
-    <div class="value">{% if data.effective_mean_t_find is not none %}{{ (data.effective_mean_t_find / 60)|round|int }}m{% else %}-{% endif %}</div>
-    <div class="foot">across confirmed issues this day</div>
-  </div>
-  <div class="stat">
-    <div class="label">Report accuracy</div>
-    <div class="value">
-      {% if data.class_accuracy is not none %}{{ (data.class_accuracy * 100)|round|int }}%{% else %}-{% endif %}
-      <small>class / {% if data.severity_accuracy is not none %}{{ (data.severity_accuracy * 100)|round|int }}%{% else %}-{% endif %} sev</small>
+    <div class="label">Hacker persona</div>
+    <div class="value">{{ data.persona.name }}</div>
+    <div class="foot">{{ data.persona.blurb }}</div>
+    {% if data.persona.next %}
+    <div class="progress mt" style="margin-top:10px">
+      <i style="width:{{ ((data.persona.points / (data.persona.points + data.persona.next.needed)) * 100)|round|int if data.persona.points > 0 else 4 }}%"></i>
     </div>
-    <div class="foot">{{ data.report_count }} report(s) &middot; mean score {{ data.mean_report_score or '-' }}</div>
+    <div class="foot">{{ data.persona.next.needed }} point(s) to reach {{ data.persona.next.name }}</div>
+    {% else %}
+    <div class="progress mt" style="margin-top:10px"><i style="width:100%"></i></div>
+    {% endif %}
   </div>
 </div>
 
+{% set flags_total = lab_total_flags() %}
+{% set cx = 210 %}
+{% set cy = 270 %}
+{% set R = 190 %}
+{% set axes = [
+  {"label": "Flags", "pct": (data.flags_found / flags_total * 100) if flags_total else 0, "x": 0, "y": -1},
+  {"label": "Speed",  "pct": data.speed_score, "x": 0.951, "y": -0.309},
+  {"label": "Impact", "pct": data.impact, "x": 0.588, "y": 0.809},
+  {"label": "Creativity", "pct": data.creativity, "x": -0.588, "y": 0.809},
+  {"label": "Complexity", "pct": data.complexity_pct, "x": -0.951, "y": -0.309}
+] %}
+
+<svg class="hunter-graph" viewBox="0 0 640 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hunter performance radar">
+  <defs>
+    <linearGradient id="gRadar" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Grid rings -->
+  {% for ring in [0.25, 0.5, 0.75, 1.0] %}
+  <polygon points="
+    {% for a in axes %}{{ cx + a.x * R * ring }},{{ cy + a.y * R * ring }}{{ ' ' if not loop.last }}{% endfor %}"
+    fill="none" stroke="#1c2533" stroke-width="1"{% if ring != 1.0 %} stroke-dasharray="3 5"{% endif %}/>
+  {% endfor %}
+
+  <!-- Diagonal spokes -->
+  {% for a in axes %}
+  <line x1="{{ cx }}" y1="{{ cy }}" x2="{{ cx + a.x * R }}" y2="{{ cy + a.y * R }}" stroke="#243049" stroke-width="1"/>
+  {% endfor %}
+
+  <!-- Data polygon -->
+  <polygon points="
+    {% for a in axes %}{{ cx + a.x * R * (a.pct / 100) }},{{ cy + a.y * R * (a.pct / 100) }}{{ ' ' if not loop.last }}{% endfor %}"
+    fill="url(#gRadar)" stroke="#34d399" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- Data points -->
+  {% for a in axes %}
+  <circle cx="{{ cx + a.x * R * (a.pct / 100) }}" cy="{{ cy + a.y * R * (a.pct / 100) }}" r="4.5" fill="#34d399" stroke="#0b0f14" stroke-width="1.5">
+    <title>{{ a.label }}: {{ a.pct|round|int }}%</title>
+  </circle>
+  {% endfor %}
+
+  <!-- Axis labels -->
+  {% for a in axes %}
+  <text x="{{ cx + a.x * (R + 34) }}" y="{{ cy + a.y * (R + 34) + 4 }}" fill="#a1b0c4" font-size="13" font-weight="600" text-anchor="middle">{{ a.label }}</text>
+  <text x="{{ cx + a.x * (R + 34) }}" y="{{ cy + a.y * (R + 34) + 20 }}" fill="#34d399" font-size="12" font-weight="700" text-anchor="middle">{{ a.pct|round|int }}%</text>
+  {% endfor %}
+
+  <text x="{{ cx }}" y="30" fill="#a1b0c4" font-size="13" font-weight="600" letter-spacing="0.06em" text-anchor="middle">HUNTER PERFORMANCE</text>
+  <text x="{{ cx }}" y="546" fill="#7c8ba0" font-size="11" text-anchor="middle">
+    flags {{ data.flags_found }}/{{ flags_total }} &middot; fastest {{ (data.fastest_find / 60)|round|int if data.fastest_find is not none else '-' }}m &middot; avg {{ (data.mean_find / 60)|round|int if data.mean_find is not none else '-' }}m &middot; {{ data.report_count }} report(s)
+  </text>
+</svg>
+
 <div class="card">
-  <h2>Per-class</h2>
+  <h2>Flags captured</h2>
+  {% if data.speed_rows %}
   <table class="data">
-    <thead>
-      <tr><th>Class</th><th>Status</th><th>Found</th><th>Reports</th><th>Best score</th><th>Reference severity</th></tr>
-    </thead>
+    <thead><tr><th>#</th><th>Class</th><th>Severity</th><th class="num">Complexity</th><th class="num">Time to capture</th></tr></thead>
     <tbody>
-      {% for cls, v in data.per_class.items() if v.found or v.validated or v.reports %}
+      {% for r in data.speed_rows %}
       <tr>
-        <td>{{ registry[cls].label }} <span class="faint mono">({{ cls }})</span></td>
-        <td>
-          {% if v.validated %}<span class="badge ok">validated</span>
-          {% elif v.found %}<span class="badge warn">exploited</span>
-          {% else %}<span class="badge danger">reported</span>{% endif %}
-        </td>
-        <td>{% if v.found %}<span class="badge ok">yes</span>{% else %}<span class="faint">no</span>{% endif %}</td>
-        <td>{{ v.reports }}</td>
-        <td class="num">{{ v.best_score or '-' }}</td>
-        <td><span class="badge badge-{{ registry[cls].severity }}">{{ registry[cls].severity }}</span></td>
+        <td class="mono">{{ r.slot }}</td>
+        <td>{{ r.label }}</td>
+        <td><span class="badge badge-{{ r.severity }}">{{ r.severity }}</span></td>
+        <td class="num">{{ r.weight }}/4</td>
+        <td class="num">{% if r.ttf_min is not none %}{{ r.ttf_min }}m{% else %}-{% endif %}</td>
       </tr>
-      {% else %}
-      <tr><td colspan="6" class="muted">No findings confirmed yet. Classes appear here once you have found them.</td></tr>
       {% endfor %}
     </tbody>
   </table>
-</div>
-
-<div class="card">
-  <h2>History vs today</h2>
-  <p class="muted">Validated findings from previous days (awarded flags) compared with the wiki's reference solve rates.</p>
-  <table class="data">
-    <thead>
-      <tr><th>Day</th><th>Class</th><th>Found</th><th class="num">TTV (s)</th><th class="num">Report score</th></tr>
-    </thead>
-    <tbody>
-      {% for h in data.history %}
-      <tr>
-        <td class="mono">{{ h.day }}</td>
-        <td>{{ registry[h.class].label }}</td>
-        <td>{% if h.found %}<span class="badge ok">yes</span>{% else %}<span class="badge danger">no</span>{% endif %}</td>
-        <td class="num">{{ h.t_found|int if h.t_found else '-' }}</td>
-        <td class="num">{{ h.score or '-' }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="5" class="muted">No validated findings on record yet. Flags land here after triage.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<div class="card">
-  <h2>Improvement tips</h2>
-  <ul class="muted" style="padding-left:20px;line-height:1.7">
-    {% for t in data.tips %}<li>{{ t }}</li>{% endfor %}
-  </ul>
+  {% else %}
+  <p class="muted">No flags captured yet. Capture flags to grow this report.</p>
+  {% endif %}
 </div>
 {% endblock %}

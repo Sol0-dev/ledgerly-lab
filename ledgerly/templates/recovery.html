@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Security &amp; recovery &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Security &amp; recovery</h1>
+    <p class="sub">Recover access to your workspace with an ownership check.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Verify ownership</h2>
+    <p class="muted">Enter the recovery factors for this workspace. When all are correct, your recovery codes are unlocked.</p>
+    <form method="post" action="{{ url_for('recovery_verify') }}">
+      {% for i in range(ctx.chain_factors|length) %}
+      <label class="field">
+        <span>Recovery factor {{ 'ABCDEF'[i] }}</span>
+        <input type="text" name="factor_{{ i + 1 }}" class="mono">
+        <small class="field-hint">{{ ctx.chain_factors[i] }}</small>
+      </label>
+      {% endfor %}
+      <button class="btn primary" type="submit" style="margin-top:10px">Verify</button>
+    </form>
+    {% if error %}<div class="flash error mt">{{ error }}</div>{% endif %}
+    {% if unlocked %}
+    <div class="flash success mt">Ownership verified. Recovery codes unlocked:</div>
+    <div class="code-block mt mono">{{ chain_flag }}</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Recovery status</h2>
+    <table class="data">
+      <tbody>
+        <tr><th style="width:180px">Workspace</th><td class="mono">{{ ctx.day }}</td></tr>
+        <tr><th>Factor count</th><td>{{ ctx.chain_factors|length }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

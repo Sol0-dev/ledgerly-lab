@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Import &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Data import</h1>
+    <p class="sub">Import a workspace in XML or CSV format.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width:640px">
+  <h2>XML import</h2>
+  <p class="muted">Paste an XML document. Supported root elements: <span class="mono">&lt;workspace&gt;</span>.</p>
+  <form id="import-form">
+    <label class="field">
+      <span>XML document</span>
+      <textarea name="xml" rows="8" placeholder="&lt;workspace&gt;&lt;row name='Acme' /&gt;&lt;/workspace&gt;"></textarea>
+    </label>
+    <button class="btn primary" type="submit">Import</button>
+  </form>
+  <div id="import-result" class="mt"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("import-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var box = document.getElementById("import-result");
+  box.innerHTML = '<div class="muted">Parsing&hellip;</div>';
+  fetch("{{ url_for('import_xml') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/xml" },
+    body: this.querySelector("[name=xml]").value
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    box.innerHTML = '<div class="code-block">' + JSON.stringify(data) + '</div>';
+  }).catch(function () { box.innerHTML = '<div class="flash error">Request failed</div>'; });
+});
+</script>
+{% endblock %}

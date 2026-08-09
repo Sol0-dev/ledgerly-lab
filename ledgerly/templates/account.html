@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Account &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Account</h1>
+    <p class="sub">Your account details and session information.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width:560px">
+  <table class="data">
+    <tbody>
+      <tr><th style="width:160px">Username</th><td class="mono">{{ me.username }}</td></tr>
+      <tr><th>Email</th><td class="mono">{{ me.email }}</td></tr>
+      <tr><th>Role</th><td><span class="role-badge">{{ me.role }}</span></td></tr>
+      <tr><th>Display</th><td>{{ me.display }}</td></tr>
+    </tbody>
+  </table>
+  <p class="muted mt">Session token is issued by this deployment's signing key.</p>
+</div>
+{% endblock %}

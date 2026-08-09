@@ -8,7 +8,6 @@
   </div>
   <div class="page-actions">
     <a class="btn primary" href="{{ url_for('invoice_new') }}">New invoice</a>
-    <a class="btn" href="{{ url_for('reports') }}">Reports</a>
   </div>
 </div>
 
@@ -22,9 +21,9 @@
     <div class="value">{{ balance|money }}</div>
   </div>
   <div class="stat">
-    <div class="label">Active issues today</div>
-    <div class="value">{{ g.ctx.active_vulns|length }} <small>on this build</small></div>
-    <div class="foot">Find them, exploit them, report them.</div>
+    <div class="label">Active issues</div>
+    <div class="value">{{ lab_total_vulns() }}<small>/{{ lab_total_vulns() }} in scope</small></div>
+    <div class="foot">{{ captured_total() }}/{{ max_slots() }} confirmed. {% if captured_total() >= max_slots() %}All today's issues confirmed. Report them to the desk.{% else %}Find them, exploit them, report them.{% endif %}</div>
   </div>
 </div>
 

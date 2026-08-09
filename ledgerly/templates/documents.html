@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Documents &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Documents</h1>
+    <p class="sub">Signed documents and exported files for this workspace.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Recent documents</h2>
+    <table class="data">
+      <thead><tr><th>Name</th><th>Path</th></tr></thead>
+      <tbody>
+        {% for d in documents %}
+        <tr>
+          <td>{{ d.label }}</td>
+          <td><a class="mono" href="{{ url_for('doc_get', name=d.path) }}">{{ d.path }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>About</h2>
+    <p class="muted">Workspace documents are stored on the filesystem and served by path. Use the links above to open a file.</p>
+  </div>
+</div>
+{% endblock %}

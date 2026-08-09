@@ -50,7 +50,8 @@ def cmd_run(args: argparse.Namespace) -> None:
     from werkzeug.serving import WSGIRequestHandler, run_simple
 
     store.init_db()
-    app = create_app()
+    app = create_app(meta=False)
+    meta_app = create_app(meta=True)
 
     class _FingerprintHandler(WSGIRequestHandler):
         """Suppress werkzeug's own Server header so the app's fingerprint
@@ -61,12 +62,31 @@ def cmd_run(args: argparse.Namespace) -> None:
             self.send_response_only(code, message)
             self.send_header("Date", self.date_time_string())
 
-    print(f"Ledgerly lab listening on {args.host}:{args.port}")
+    meta_port = int(os.environ.get("LEDGERLY_META_PORT", "5002"))
+
+    def serve(target_app, port: int, label: str) -> None:
+        run_simple(
+            args.host, port, target_app, threaded=True,
+            request_handler=_FingerprintHandler, use_reloader=False,
+        )
+
+    print(f"Ledgerly product  listening on {args.host}:{args.port}")
+    print(f"Ledgerly reporting (reports/flags/analytics) on {args.host}:{meta_port}")
     lan = _lan_url(args.port)
     if lan:
         print(f"Via proxy (Burp): browse to {lan}  - NOT localhost, so the "
               "proxy intercepts every request.")
-    run_simple(args.host, args.port, app, threaded=True, request_handler=_FingerprintHandler)
+        lan_meta = _lan_url(meta_port)
+        if lan_meta:
+            print(f"Reporting desk via proxy: {lan_meta}")
+
+    import threading
+    threads = [
+        threading.Thread(target=serve, args=(meta_app, meta_port, "reporting"), daemon=True),
+    ]
+    for t in threads:
+        t.start()
+    serve(app, args.port, "product")
 
 
 def cmd_seed(args: argparse.Namespace) -> None:

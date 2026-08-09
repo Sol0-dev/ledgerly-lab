@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Backup &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Backup &amp; restore</h1>
+    <p class="sub">Restore a previously exported workspace archive.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width:640px">
+  <h2>Restore archive</h2>
+  <p class="muted">Paste the base64 archive produced by the backup exporter. We rebuild the workspace objects from it.</p>
+  <form id="backup-form">
+    <label class="field">
+      <span>Archive blob (base64)</span>
+      <textarea name="blob" rows="6" placeholder="AAE...</textarea>
+    </label>
+    <button class="btn primary" type="submit">Restore</button>
+  </form>
+  <div id="backup-result" class="mt"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("backup-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var box = document.getElementById("backup-result");
+  box.innerHTML = '<div class="muted">Restoring&hellip;</div>';
+  fetch("{{ url_for('backup') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ blob: this.querySelector("[name=blob]").value })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    box.innerHTML = '<div class="code-block">' + JSON.stringify(data) + '</div>';
+  }).catch(function () { box.innerHTML = '<div class="flash error">Request failed</div>'; });
+});
+</script>
+{% endblock %}

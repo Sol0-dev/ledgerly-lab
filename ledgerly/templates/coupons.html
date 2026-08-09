@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Coupons &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Coupons</h1>
+    <p class="sub">Apply a promo code to your subscription balance.</p>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Redeem a coupon</h2>
+    <form id="coupon-form">
+      <label class="field">
+        <span>Coupon code</span>
+        <input type="text" name="code" value="{{ code }}" class="mono">
+        <small class="field-hint">Enter the code shown in your promo email.</small>
+      </label>
+      <button class="btn primary" type="submit">Apply coupon</button>
+    </form>
+    <div id="coupon-result" class="mt"></div>
+  </div>
+
+  <div class="card">
+    <h2>Coupon ledger</h2>
+    <table class="data">
+      <thead><tr><th>Code</th><th>Times used</th><th>Last used</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">{{ code }}</td>
+          <td id="uses-count">{{ uses }}</td>
+          <td id="uses-last">{{ last_used or "never" }}</td>
+        </tr>
+      </tbody>
+    </table>
+    {% if race_flag %}
+    <div class="card mt">
+      <h2>Redemption history</h2>
+      <p class="muted">A single code was applied more than once. Reference token from the promo ledger:</p>
+      <div class="code-block mono">{{ race_flag }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("coupon-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var box = document.getElementById("coupon-result");
+  box.innerHTML = '<div class="muted">Applying&hellip;</div>';
+  fetch("{{ url_for('coupon_redeem_route') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ code: this.querySelector("[name=code]").value })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    box.innerHTML = '<div class="code-block">' + JSON.stringify(data) + '</div>';
+  }).catch(function () { box.innerHTML = '<div class="flash error">Request failed</div>'; });
+});
+</script>
+{% endblock %}

@@ -13,6 +13,8 @@ from typing import Any
 from . import store
 
 # Metadata per class. Skills path matches .opencode/skills/<class>-hunt/SKILL.md.
+# `feature` is the normal-looking product surface where the flag hides - it is
+# never shown to the hunter as a hint. `skill` drives analytics + match hints.
 REGISTRY: dict[str, dict[str, Any]] = {
     "sqli": {
         "label": "SQL injection",
@@ -70,6 +72,150 @@ REGISTRY: dict[str, dict[str, Any]] = {
         "severity": "medium",
         "example_payload": '{"access":{"$ne":"__none__"}}',
     },
+    "xss": {
+        "label": "Cross-site scripting",
+        "feature": "Team / profile",
+        "hint": "Stored field rendered without escaping",
+        "skill": "clientside-hunt",
+        "severity": "high",
+        "example_payload": "<script>alert(1)</script>",
+    },
+    "csrf": {
+        "label": "Cross-site request forgery",
+        "feature": "Invoice status",
+        "hint": "State change with no token or origin check",
+        "skill": "clientside-hunt",
+        "severity": "medium",
+        "example_payload": "POST /invoices/3/status",
+    },
+    "cors": {
+        "label": "CORS misconfiguration",
+        "feature": "Clients API",
+        "hint": "Reflected origin with credentials",
+        "skill": "clientside-hunt",
+        "severity": "medium",
+        "example_payload": "Origin: https://evil.example",
+    },
+    "open_redirect": {
+        "label": "Open redirect",
+        "feature": "Billing return",
+        "hint": "Unvalidated redirect target",
+        "skill": "clientside-hunt",
+        "severity": "low",
+        "example_payload": "/billing/return?to=https://evil.example",
+    },
+    "clickjacking": {
+        "label": "Clickjacking",
+        "feature": "Account page",
+        "hint": "No frame-busting headers on sensitive page",
+        "skill": "clientside-hunt",
+        "severity": "low",
+        "example_payload": "<iframe src=/account>",
+    },
+    "jwt": {
+        "label": "JWT weakness",
+        "feature": "API keys",
+        "hint": "alg:none accepted on signed tokens",
+        "skill": "auth-hunt",
+        "severity": "high",
+        "example_payload": "alg=none forged token",
+    },
+    "oauth": {
+        "label": "OAuth flow flaw",
+        "feature": "Partner sign-in",
+        "hint": "Missing state / unverified code exchange",
+        "skill": "auth-hunt",
+        "severity": "high",
+        "example_payload": "/auth/partner?state=",
+    },
+    "deser": {
+        "label": "Insecure deserialization",
+        "feature": "Backup restore",
+        "hint": "Untrusted blob unpickled",
+        "skill": "injection-hunt",
+        "severity": "critical",
+        "example_payload": "pickle RCE payload",
+    },
+    "lfi": {
+        "label": "Path traversal",
+        "feature": "Documents",
+        "hint": "Filename used in open() unchecked",
+        "skill": "injection-hunt",
+        "severity": "high",
+        "example_payload": "/documents/../../etc/passwd",
+    },
+    "cmdi": {
+        "label": "Command injection",
+        "feature": "Export",
+        "hint": "User input reaches a shell command",
+        "skill": "injection-hunt",
+        "severity": "critical",
+        "example_payload": "; id",
+    },
+    "xxe": {
+        "label": "XML external entity",
+        "feature": "Import",
+        "hint": "DOCTYPE entity expanded from user XML",
+        "skill": "injection-hunt",
+        "severity": "high",
+        "example_payload": "<!DOCTYPE xxe [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]>",
+    },
+    "race": {
+        "label": "Race condition",
+        "feature": "Coupons",
+        "hint": "Check-then-act without a lock",
+        "skill": "logic-hunt",
+        "severity": "high",
+        "example_payload": "parallel redeem burst",
+    },
+    "redos": {
+        "label": "ReDoS",
+        "feature": "Search",
+        "hint": "User pattern compiled into a regex",
+        "skill": "logic-hunt",
+        "severity": "medium",
+        "example_payload": "^(a+)+$",
+    },
+    "infoleak": {
+        "label": "Sensitive info disclosure",
+        "feature": "Health",
+        "hint": "Runtime config exposed by status endpoint",
+        "skill": "infodisclosure-hunt",
+        "severity": "medium",
+        "example_payload": "GET /api/v1/health",
+    },
+    "graphql": {
+        "label": "GraphQL flaw",
+        "feature": "GraphQL console",
+        "hint": "Introspection on, authorization off",
+        "skill": "injection-hunt",
+        "severity": "high",
+        "example_payload": "{__schema{types{name}}}",
+    },
+    "prototype_pollution": {
+        "label": "Prototype pollution",
+        "feature": "Theme",
+        "hint": "JSON merge walks __proto__",
+        "skill": "clientside-hunt",
+        "severity": "high",
+        "example_payload": '{"__proto__":{"isAdmin":true}}',
+    },
+    "token_mgmt": {
+        "label": "Token lifecycle gap",
+        "feature": "API key rotation",
+        "hint": "Rotated key keeps working",
+        "skill": "auth-token-mgmt",
+        "severity": "high",
+        "example_payload": "rotate then reuse old key",
+    },
+    "chain": {
+        "label": "Chained attack",
+        "feature": "Security / recovery",
+        "hint": "Two primitives combined on a compound surface",
+        "skill": "chain-hunt",
+        "severity": "critical",
+        "example_payload": "chain code on recovery surface",
+    },
 }
 
 SEVERITIES = ["critical", "high", "medium", "low"]
@@ -84,6 +230,24 @@ WIKI_ESTIMATES: dict[str, float] = {
     "mass_assignment": 0.90,
     "logic": 0.80,
     "nosqli": 0.80,
+    "xss": 0.85,
+    "csrf": 0.80,
+    "cors": 0.75,
+    "open_redirect": 0.90,
+    "clickjacking": 0.90,
+    "jwt": 0.85,
+    "oauth": 0.80,
+    "deser": 0.70,
+    "lfi": 0.95,
+    "cmdi": 0.85,
+    "xxe": 0.80,
+    "race": 0.65,
+    "redos": 0.60,
+    "infoleak": 0.90,
+    "graphql": 0.75,
+    "prototype_pollution": 0.60,
+    "token_mgmt": 0.75,
+    "chain": 0.40,
 }
 
 
@@ -167,7 +331,7 @@ def compute_analytics(ctx: dict[str, Any]) -> dict[str, Any]:
     per_class: dict[str, Any] = {}
     for cls in sorted(set(list(vulns) + active)):
         state = vulns.get(cls, {"status": "active"})
-        exploitable = cls in active
+        exploitable = cls in active or cls == "chain"
         found = state["status"] in ("exploited", "reported", "validated")
         t_found = state.get("exploited_at")
         matched = [r for r in reports if r["matched_class"] == cls]
@@ -207,6 +371,68 @@ def compute_analytics(ctx: dict[str, Any]) -> dict[str, Any]:
             continue
         history_rows.append(h)
 
+    # ---- Hunter-centric analytics (reporting desk only) --------------------
+    captures = store.day_captures(day)
+    captures.sort(key=lambda c: c["captured_at"])
+    chain_slot = len(active) + 1
+    sev_weight = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+
+    def _slot_class(slot: int) -> str:
+        if slot == chain_slot:
+            return "chain"
+        if 1 <= slot <= len(active):
+            return active[slot - 1]
+        return "?"
+
+    speed_rows: list[dict[str, Any]] = []
+    for c in captures:
+        cls = _slot_class(c["slot"])
+        ttf = (c["captured_at"] - start) if start else None
+        weight = sev_weight.get(REGISTRY[cls]["severity"], 2) if cls in REGISTRY else 4
+        speed_rows.append({
+            "slot": c["slot"],
+            "class": cls,
+            "label": REGISTRY[cls]["label"] if cls in REGISTRY else "Chain",
+            "severity": REGISTRY[cls]["severity"] if cls in REGISTRY else "critical",
+            "weight": weight,
+            "ttf": ttf,
+            "ttf_min": round(ttf / 60, 1) if ttf is not None else None,
+        })
+
+    flags_found = len(captures)
+    ttfs = [r["ttf"] for r in speed_rows if r["ttf"] is not None]
+    fastest_find = round(min(ttfs), 1) if ttfs else None
+    mean_find = round(sum(ttfs) / len(ttfs), 1) if ttfs else None
+    # Speed meter: faster flags score higher (0s = 100, 15min+ = 0).
+    speed_score = (
+        round(max(0, min(100, 100 * (1 - fastest_find / 900)))) if fastest_find is not None else 0
+    )
+
+    available_weight = sum(
+        sev_weight.get(REGISTRY[c]["severity"], 2) for c in active
+    ) + (4 if ctx.get("chain") else 0)
+    captured_weight = sum(r["weight"] for r in speed_rows)
+    impact = round(captured_weight / available_weight * 100) if available_weight else 0
+    complexity_index = round(captured_weight / len(speed_rows), 2) if speed_rows else 0.0
+    complexity_pct = round(complexity_index / 4 * 100) if speed_rows else 0
+
+    chain_done = (
+        "chain" in per_class and per_class["chain"]["found"]
+    ) or any(r["class"] == "chain" for r in speed_rows)
+    explored = store.touched_surfaces(day)
+    creativity = min(100, (60 if chain_done else 0) + min(len(explored) * 8, 40))
+
+    # Persona level - deliberately generous, never harsh.
+    persona_points = flags_found * 2
+    persona_points += len(reports)
+    if fastest_find is not None:
+        persona_points += 2 if fastest_find <= 300 else 1
+    if chain_done:
+        persona_points += 2
+    if completed:
+        persona_points += 1
+    persona = _persona_level(persona_points)
+
     return {
         "day": day,
         "active_vulns": active,
@@ -226,6 +452,53 @@ def compute_analytics(ctx: dict[str, Any]) -> dict[str, Any]:
         "estimates": WIKI_ESTIMATES,
         "gaps": _gaps(per_class, active),
         "tips": build_tips(per_class, reports, active, t_founds),
+        # hunter-centric stats
+        "flags_found": flags_found,
+        "fastest_find": fastest_find,
+        "mean_find": mean_find,
+        "speed_score": speed_score,
+        "impact": impact,
+        "complexity_index": complexity_index,
+        "complexity_pct": complexity_pct,
+        "complexity_total": captured_weight,
+        "creativity": creativity,
+        "chain_done": chain_done,
+        "explored_count": len(explored),
+        "persona": persona,
+        "speed_rows": speed_rows,
+    }
+
+
+def _persona_level(points: int) -> dict[str, Any]:
+    """Map hunter effort into a persona level. Deliberately encouraging:
+    every tier reads positively and thresholds are forgiving so the desk
+    never sounds harsh about a hunter's pace or count."""
+    tiers = [
+        (0,  "First Steps",  "Every hunt starts with one small find. Momentum builds from here."),
+        (2,  "Curious Hunter", "You are poking surfaces and reading the lab. Keep going."),
+        (4,  "Observer",       "Solid reconnaissance instincts. The flags will follow."),
+        (6,  "Researcher",     "You are turning exploration into confirmed findings. Nice rhythm."),
+        (8,  "Operator",       "Reproducible impact across surfaces - dependable and careful."),
+        (10, "Specialist",     "Fast reads, clean confirmations. You clearly know your classes."),
+        (12, "Expert",         "Precision hunting with strong report quality. Impressive focus."),
+        (14, "Elite",          "Elite-level speed and coverage. The ledger respects your work."),
+    ]
+    name = "First Steps"
+    blurb = tiers[0][2]
+    for threshold, tname, ttext in reversed(tiers):
+        if points >= threshold:
+            name, blurb = tname, ttext
+            break
+    next_tier = None
+    for threshold, tname, ttext in tiers:
+        if threshold > points:
+            next_tier = {"name": tname, "needed": threshold - points}
+            break
+    return {
+        "name": name,
+        "blurb": blurb,
+        "points": points,
+        "next": next_tier,
     }
 
 

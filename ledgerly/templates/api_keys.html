@@ -10,12 +10,14 @@
 
 <div class="grid cols-2">
   <div class="card">
-    <h2>Your key</h2>
-    <div class="code-block">
-      <span class="c"># Header used for authenticated calls</span>
-      Authorization: Bearer {{ ctx.api_key[:8] }}...
-    </div>
+    <h2>Your key(s)</h2>
+    {% for k in keys %}
+    <div class="code-block" style="white-space:pre">{{ k.key }}</div>
+    {% endfor %}
     <p class="muted mt">Calls without a key fall back to your browser session.</p>
+    <form method="post" action="{{ url_for('api_key_rotate') }}" style="margin-top:10px">
+      <button class="btn" type="submit">Rotate key</button>
+    </form>
   </div>
 
   <div class="card">
@@ -23,6 +25,24 @@
     <div class="code-block">{{ ctx.tech.api }}</div>
     <p class="muted mt">All endpoints below live under this prefix. The prefix differs between deployments.</p>
   </div>
+</div>
+
+<div class="card">
+  <h2>Your signed session token</h2>
+  <p class="muted">A signed token minted by this deployment for your session. Useful for API calls that accept token auth.</p>
+  <div class="code-block" style="white-space:pre;overflow-x:auto">{{ jwt_token }}</div>
+  {% if jwt_flag %}
+  <div class="card mt">
+    <p class="muted">An unsigned token minted at the keys desk was accepted. Reference token:</p>
+    <div class="code-block mono">{{ jwt_flag }}</div>
+  </div>
+  {% endif %}
+  {% if token_flag %}
+  <div class="card mt">
+    <p class="muted">A rotated-away key still authenticates. Reference token:</p>
+    <div class="code-block mono">{{ token_flag }}</div>
+  </div>
+  {% endif %}
 </div>
 
 <div class="card">
@@ -41,6 +61,11 @@
         <td><span class="api-method m-get">GET</span></td>
         <td class="mono">{{ ctx.tech.api }}/invoices/&lt;id&gt;</td>
         <td>Fetch a single invoice by id.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ ctx.tech.api }}/keys</td>
+        <td>List the API keys currently accepted by this workspace.</td>
       </tr>
       <tr>
         <td><span class="api-method m-put">PUT</span></td>

@@ -41,8 +41,59 @@
         <td class="mono">{{ api }}/team/me</td>
         <td>Update your own profile fields.</td>
       </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ api }}/keys</td>
+        <td>List the API keys currently accepted.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">{{ api }}/v1/health</td>
+        <td>Deployment health status (unauthenticated).</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-post">POST</span></td>
+        <td class="mono">/auth/partner?code=&lt;code&gt;</td>
+        <td>Complete a partner (OAuth) sign-in flow.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">/graphql</td>
+        <td>GraphQL gateway for workspace queries.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">/documents/&lt;path&gt;</td>
+        <td>Open a stored document by path.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">/invoices/&lt;id&gt;/status</td>
+        <td>Status card for an invoice.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-get">GET</span></td>
+        <td class="mono">/billing/return?next=&lt;url&gt;</td>
+        <td>Return from an external billing flow.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-post">POST</span></td>
+        <td class="mono">/reports/export</td>
+        <td>Export a report to a named format.</td>
+      </tr>
+      <tr>
+        <td><span class="api-method m-post">POST</span></td>
+        <td class="mono">/coupons/redeem</td>
+        <td>Redeem a promo code against the balance.</td>
+      </tr>
     </tbody>
   </table>
+</div>
+
+<div class="card">
+  <h2>Reporting desk</h2>
+  <p>The reporting desk (reports, flags, analytics, triage) runs on a separate port for this deployment:
+  <code class="mono">{{ meta_base }}</code>. It shares your session cookie, so no re-login is needed.</p>
 </div>
 
 <div class="card">

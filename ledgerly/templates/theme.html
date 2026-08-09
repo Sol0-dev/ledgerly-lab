@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Theme &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Theme &amp; appearance</h1>
+    <p class="sub">Fine-tune the look of your workspace.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width:640px">
+  <h2>Theme settings</h2>
+  <form id="theme-form">
+    <label class="field">
+      <span>Theme config (JSON)</span>
+      <textarea name="settings" rows="6">{{ ctx.theme_json }}</textarea>
+    </label>
+    <button class="btn primary" type="submit">Save theme</button>
+  </form>
+  <div id="theme-result" class="mt"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("theme-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var box = document.getElementById("theme-result");
+  box.innerHTML = '<div class="muted">Saving&hellip;</div>';
+  fetch("{{ url_for('theme') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: this.querySelector("[name=settings]").value
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    box.innerHTML = '<div class="code-block">' + JSON.stringify(data) + '</div>';
+  }).catch(function () { box.innerHTML = '<div class="flash error">Request failed</div>'; });
+});
+</script>
+{% endblock %}

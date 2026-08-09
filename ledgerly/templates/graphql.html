@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}API explorer &middot; Ledgerly{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>API explorer</h1>
+    <p class="sub">Run GraphQL queries against the Ledgerly gateway.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width:720px">
+  <h2>Query</h2>
+  <form id="gql-form">
+    <label class="field">
+      <span>GraphQL query</span>
+      <textarea name="query" rows="6">query { invoice(id: 1042) { number client { name } total } }</textarea>
+    </label>
+    <button class="btn primary" type="submit">Run query</button>
+  </form>
+  <div id="gql-result" class="mt"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("gql-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var box = document.getElementById("gql-result");
+  box.innerHTML = '<div class="muted">Running&hellip;</div>';
+  fetch("{{ url_for('graphql') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: this.querySelector("[name=query]").value })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    box.innerHTML = '<div class="code-block">' + JSON.stringify(data, null, 2).replace(/</g, "&lt;") + '</div>';
+  }).catch(function () { box.innerHTML = '<div class="flash error">Request failed</div>'; });
+});
+</script>
+{% endblock %}

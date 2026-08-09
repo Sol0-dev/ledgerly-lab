@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 440" role="img" aria-label="Ledgerly illustration">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef3fb"/>
+      <stop offset="1" stop-color="#e3edfb"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b8def"/>
+      <stop offset="1" stop-color="#3d6fd9"/>
+    </linearGradient>
+    <linearGradient id="coin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6c453"/>
+      <stop offset="1" stop-color="#e0a92f"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f7fafd"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#1b3350" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <rect width="520" height="440" fill="url(#bg)" rx="24"/>
+
+  <!-- dotted ledger grid backdrop -->
+  <g fill="#c7d6ea" opacity="0.55">
+    <circle cx="46" cy="44" r="2.4"/><circle cx="110" cy="44" r="2.4"/><circle cx="174" cy="44" r="2.4"/>
+    <circle cx="46" cy="108" r="2.4"/><circle cx="110" cy="108" r="2.4"/><circle cx="174" cy="108" r="2.4"/>
+    <circle cx="350" cy="392" r="2.4"/><circle cx="414" cy="392" r="2.4"/><circle cx="478" cy="392" r="2.4"/>
+    <circle cx="350" cy="332" r="2.4"/><circle cx="414" cy="332" r="2.4"/><circle cx="478" cy="332" r="2.4"/>
+  </g>
+
+  <!-- floating invoice document -->
+  <g filter="url(#soft)" transform="translate(84 74)">
+    <rect width="224" height="296" rx="16" fill="url(#paper)" stroke="#d9e4f2" stroke-width="1.5"/>
+    <rect x="20" y="22" width="60" height="60" rx="12" fill="url(#acc)" opacity="0.92"/>
+    <text x="50" y="62" font-family="Georgia, serif" font-size="34" font-weight="700" fill="#ffffff" text-anchor="middle">L</text>
+    <rect x="96" y="26" width="108" height="11" rx="5.5" fill="#c4d3e6"/>
+    <rect x="96" y="45" width="76" height="9" rx="4.5" fill="#e1e9f4"/>
+    <line x1="20" y1="104" x2="204" y2="104" stroke="#e6edf6" stroke-width="2"/>
+    <rect x="20" y="122" width="120" height="9" rx="4.5" fill="#dfe8f3"/>
+    <rect x="20" y="139" width="164" height="9" rx="4.5" fill="#e6edf6"/>
+    <rect x="20" y="168" width="90" height="9" rx="4.5" fill="#dfe8f3"/>
+    <rect x="20" y="185" width="140" height="9" rx="4.5" fill="#e6edf6"/>
+    <rect x="20" y="214" width="110" height="9" rx="4.5" fill="#dfe8f3"/>
+    <rect x="20" y="231" width="150" height="9" rx="4.5" fill="#e6edf6"/>
+    <line x1="20" y1="258" x2="204" y2="258" stroke="#e6edf6" stroke-width="2"/>
+    <rect x="20" y="272" width="56" height="9" rx="4.5" fill="#c4d3e6"/>
+    <rect x="150" y="266" width="54" height="20" rx="10" fill="url(#acc)"/>
+    <text x="177" y="280" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">PAID</text>
+  </g>
+
+  <!-- bar chart card -->
+  <g filter="url(#soft)" transform="translate(308 258)">
+    <rect width="168" height="128" rx="14" fill="#ffffff" stroke="#d9e4f2" stroke-width="1.5"/>
+    <rect x="20" y="92" width="18" height="20" rx="4" fill="#bcd0ec"/>
+    <rect x="48" y="72" width="18" height="40" rx="4" fill="#8fb0e6"/>
+    <rect x="76" y="52" width="18" height="60" rx="4" fill="#5b8def"/>
+    <rect x="104" y="60" width="18" height="52" rx="4" fill="#7ba1e4"/>
+    <rect x="132" y="34" width="18" height="78" rx="4" fill="#3d6fd9"/>
+    <line x1="20" y1="120" x2="150" y2="120" stroke="#e6edf6" stroke-width="2"/>
+  </g>
+
+  <!-- coin stack -->
+  <g filter="url(#soft)" transform="translate(66 300)">
+    <ellipse cx="44" cy="30" rx="34" ry="11" fill="url(#coin)"/>
+    <rect x="10" y="24" width="68" height="13" fill="url(#coin)"/>
+    <ellipse cx="44" cy="24" rx="34" ry="11" fill="#f8d98a"/>
+    <text x="44" y="29" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="700" fill="#8a6420" text-anchor="middle">$</text>
+    <ellipse cx="44" cy="11" rx="34" ry="11" fill="#f6c453"/>
+    <text x="44" y="16" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="700" fill="#8a6420" text-anchor="middle">$</text>
+  </g>
+
+  <!-- shield check -->
+  <g transform="translate(398 56)">
+    <path d="M28 4 L48 12 V30 C48 46 40 54 28 60 C16 54 8 46 8 30 V12 Z" fill="url(#acc)" opacity="0.95"/>
+    <path d="M20 32 L26 38 L37 25" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
