@@ -6,6 +6,8 @@ attack are live at once. You find each `FLAG{...}` on its surface, submit it to
 bank the slot, report it, and a triage CLI accepts or rejects your reports.
 Accepted issues feed the analytics dashboard.
 
+![Ledgerly analytics with a fully solved lab](images/analytics-solved.png)
+
 ## Vulnerability classes included
 
 The lab implements the following classes as real, server-verified primitives.
@@ -42,15 +44,49 @@ Every class is exploitable every day.
 No class is named, hinted at, or advertised anywhere in the running UI - the
 surfaces all present as ordinary product features.
 
-## Run it
+## Prerequisites
+
+- **Python 3.10+** — check with `python3 --version`
+- **pip** — usually bundled with Python
+- **Docker** (optional) — only needed for the container setup
+- **Burp Suite** (optional) — recommended for intercepting traffic
+
+The only Python dependency is **Flask 3.x**. Everything else is the standard
+library.
+
+## Setup on your computer
 
 ```bash
-python3 server.py run            # http://0.0.0.0:5001 (all interfaces)
-python3 server.py run --port 9000
-python3 server.py run --host 127.0.0.1   # localhost only (no proxy routing)
+# 1. Get the code
+git clone https://github.com/Sol0-dev/ledgerly-lab.git
+cd ledgerly-lab
+
+# 2. Install the dependency (in a venv if you prefer)
+python3 -m pip install flask==3.0.3
+
+# 3. Start the lab
+python3 server.py run
 ```
 
+The lab is now running. Open your browser at:
+
+```
+http://127.0.0.1:5001        # the product (invoices, documents, settings)
+http://127.0.0.1:5002        # the reporting desk (flags, analytics, triage)
+```
+
+The product binds to `0.0.0.0:5001` by default so it is reachable from other
+devices on your network (handy for Burp). The reporting desk runs one port
+higher (`5002`). Both ports are printed at startup.
+
 Demo login: `hunter` / `hunter-pass`. Or register your own account.
+
+### Options
+
+```bash
+python3 server.py run --port 9000          # change the product port
+python3 server.py run --host 127.0.0.1     # localhost only (no proxy routing)
+```
 
 ## Run with Docker
 
@@ -88,6 +124,8 @@ request in Burp:
    the proxy for loopback, so `localhost` traffic would miss Burp. The server
    prints the exact URL to use at startup (e.g. `http://192.168.1.20:5001`).
    Find it anytime with `hostname -I`.
+
+## CLI commands
 
 | Command | What it does |
 |---|---|
