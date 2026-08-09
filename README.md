@@ -73,16 +73,6 @@ SSRF primitive is confirmed with an out-of-band callback.
 Every active issue hides an opaque `FLAG{...}` on its surface - the same place
 the issue's data flows, so you only see it once the primitive is real:
 
-| Class | Where the flag is revealed |
-|---|---|
-| `sqli` | Admin page, after the auth bypass lands you in as admin |
-| `idor` | Second line item on a foreign invoice (`INV-1006`) |
-| `ssti` | Preview response via `{{flag}}` in the template |
-| `ssrf` | `/internal/secret` response when the webhook test reaches it |
-| `mass_assignment` | Team page, after `role` escalates to admin |
-| `logic` | The invoice you created with a negative line total |
-| `nosqli` | The private client row leaked by a filter operator |
-
 Submit a flag on the **Flags** page to bank that slot. The flag string itself
 never says which class it belongs to (slots are positional only), and it only
 banks if the server has already recorded that class as exploited - pasting a
@@ -108,22 +98,6 @@ day's flags is what completes the day.
    flags are captured the day locks (confetti + a capture sound), and analytics
    shows your capability index, time-to-find per class, accuracy, and
    improvement tips against the repo's reference solve rates.
-
-## Vulnerability pool
-
-| Class | Surface | Why it's server-verified |
-|---|---|---|
-| `sqli` | Sign in | Auth query built from raw input; a comment terminator cancels the password clause |
-| `idor` | Invoice detail (+ API) | Object id taken from the path with no ownership check |
-| `ssti` | Notification preview | Editor input rendered as a Jinja template server-side |
-| `ssrf` | Webhook test | Outbound fetch driven by user URL, including loopback |
-| `mass_assignment` | Team settings API | Request body merged into the user object; `role` is writable |
-| `logic` | Invoice lines | Negative quantity / unit price accepted into the total |
-| `nosqli` | Client list filter | JSON filter operators accepted verbatim, leaking private clients |
-
-When a class is not drawn, its sink is inert (parameterized, rejected, hidden,
-or 404). `/internal/secret` only exists on SSRF days. Only the three drawn
-classes can ever be exploited, so the day is never gated on a false positive.
 
 ## Design rules
 
